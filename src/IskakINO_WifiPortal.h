@@ -52,7 +52,11 @@ class IskakINO_WifiPortal {
     const char* _apName;
     const char* _apPass;
     const char* _brandName = "IskakINO Portal";
-    
+
+    unsigned long _lastWifiCheck = 0;
+    int _reconnectAttempts = 0;
+    const int _maxReconnectAttempts = 5;
+
     bool _portalActive = false;
     bool _otaEnabled = false;
     int  _timeout = 0;
