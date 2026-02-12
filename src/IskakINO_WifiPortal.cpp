@@ -72,7 +72,24 @@ void IskakINO_WifiPortal::setupPortal() {
             }
         });
     }
+// --- TAMBAHKAN DI SINI ---
+    
+    // Fitur Reboot lewat Web
+    _server->on("/reboot", [this]() {
+        _server->send(200, "text/html", "<html><body style='background:#1a1a1a;color:#eee;text-align:center;padding-top:50px;'><h2>Restarting...</h2><p>Please wait a few seconds.</p></body></html>");
+        delay(1000);
+        ESP.restart();
+    });
 
+    // Fitur Reset/Clear Data lewat Web
+    _server->on("/clear", [this]() {
+        LittleFS.format(); 
+        _server->send(200, "text/html", "<html><body style='background:#1a1a1a;color:#eee;text-align:center;padding-top:50px;'><h2>Settings Cleared!</h2><p>Device will restart and back to default.</p></body></html>");
+        delay(1000);
+        ESP.restart();
+    });
+
+    // -----------------------
     _server->onNotFound(std::bind(&IskakINO_WifiPortal::handleRoot, this));
     _server->begin();
     _portalActive = true;
@@ -168,81 +185,95 @@ void IskakINO_WifiPortal::setPortalTimeout(int sec) { _timeout = sec; }
 
 void IskakINO_WifiPortal::handleRoot() {
     // 1. SCANNING WIFI: Mencari jaringan di sekitar sebelum halaman dimuat
-    // WiFi.scanNetworks() mengembalikan jumlah jaringan yang ditemukan
     int n = WiFi.scanNetworks();
     String wifiList = "";
     
     if (n == 0) {
         wifiList = "<p style='color:#888;'>No networks found. Refresh to try again.</p>";
     } else {
-        // Loop untuk menyusun daftar WiFi ke dalam elemen HTML
         for (int i = 0; i < n; ++i) {
             String ssid = WiFi.SSID(i);
-            // Setiap baris WiFi diberi event 'onclick' untuk memicu fungsi JavaScript fillSSID
             wifiList += "<div class='nw' onclick=\"fillSSID('" + ssid + "')\">";
             wifiList += "<span>" + ssid + "</span>";
-            wifiList += "<span class='rssi'>" + String(WiFi.RSSI(i)) + " dBm</span>"; // Menampilkan kekuatan sinyal
+            wifiList += "<span class='rssi'>" + String(WiFi.RSSI(i)) + " dBm</span>";
             wifiList += "</div>";
         }
     }
 
-    // 2. HTML & CSS: Membangun antarmuka web portal
+    // 2. SYSTEM INFO: Menghitung statistik sistem (Ringan & Cepat)
+    unsigned long sec = millis() / 1000;
+    unsigned long min = sec / 60;
+    unsigned long hr = min / 60;
+    String uptime = String(hr) + "h " + String(min % 60) + "m " + String(sec % 60) + "s";
+    String freeHeap = String(ESP.getFreeHeap() / 1024) + " KB";
+    String ipAddr = WiFi.localIP().toString();
+    if (ipAddr == "0.0.0.0") ipAddr = "Disconnected";
+
+    // 3. HTML & CSS
     String html = "<html><head><title>IskakINO Config</title>";
-    html += "<meta name='viewport' content='width=device-width, initial-scale=1'>"; // Agar responsif di HP
-    
-    // CSS: Mengatur tampilan portal (Dark Theme)
+    html += "<meta name='viewport' content='width=device-width, initial-scale=1'>";
     html += "<style>";
     html += "body{background:#1a1a1a;color:#eee;font-family:sans-serif;text-align:center;padding:20px;}";
     html += ".card{background:#252525;padding:20px;border-radius:10px;box-shadow:0 4px 10px rgba(0,0,0,0.5);max-width:400px;margin:0 auto;}";
-    html += "h2{color:#00d1b2;} h3{font-size:1.1em;color:#888;text-align:left;margin-bottom:10px;}";
+    html += "h2{color:#00d1b2;} h3{font-size:1.1em;color:#888;text-align:left;margin:15px 0 5px 0;}";
     
-    // Styling untuk kotak daftar WiFi yang bisa di-scroll
-    html += ".net-box{margin-bottom:20px;max-height:180px;overflow-y:auto;background:#111;border-radius:5px;border:1px solid #444;}";
+    // CSS Daftar WiFi
+    html += ".net-box{margin-bottom:20px;max-height:150px;overflow-y:auto;background:#111;border-radius:5px;border:1px solid #444;}";
     html += ".nw{display:flex;justify-content:space-between;padding:12px;border-bottom:1px solid #333;cursor:pointer;font-size:0.9em;}";
-    html += ".nw:hover{background:#00d1b2;color:#fff;}"; // Efek hover saat disentuh/diklik
-    html += ".rssi{color:#666;font-size:0.8em;} .nw:hover .rssi{color:#fff;}";
+    html += ".nw:hover{background:#00d1b2;color:#fff;} .rssi{color:#666;font-size:0.8em;}";
     
-    // Styling untuk form input dan tombol
+    // CSS Dashboard (Info Sistem)
+    html += ".dash{background:#111;padding:10px;border-radius:5px;border-left:4px solid #00d1b2;text-align:left;font-size:0.85em;margin-top:20px;}";
+    html += ".dash div{display:flex;justify-content:space-between;margin:3px 0;}";
+    html += ".label{color:#888;} .val{color:#00d1b2;font-weight:bold;}";
+    
     html += "input{width:100%;padding:12px;margin:10px 0;border-radius:5px;border:1px solid #444;background:#333;color:#fff;box-sizing:border-box;}";
     html += "button{width:100%;padding:12px;background:#00d1b2;border:none;color:#fff;font-weight:bold;border-radius:5px;cursor:pointer;margin-top:10px;}";
-    html += "button:hover{background:#00b89c;}";
     html += ".footer{margin-top:20px;font-size:0.8em;color:#555;}";
     html += "</style>";
     
-    // 3. JAVASCRIPT: Menangani interaksi klik pada daftar WiFi
-    html += "<script>";
-    // Fungsi ini mengisi input SSID dan memindahkan kursor ke input Password secara otomatis
-    html += "function fillSSID(s){ document.getElementsByName('s')[0].value=s; document.getElementsByName('p')[0].focus(); }";
-    html += "</script>";
-    
+    html += "<script>function fillSSID(s){document.getElementsByName('s')[0].value=s;document.getElementsByName('p')[0].focus();}</script>";
     html += "</head><body><div class='card'>";
     html += "<h2>IskakINO Portal</h2>";
     
-    // Menampilkan daftar WiFi hasil scan di atas form
-    html += "<h3>Select Network</h3>";
-    html += "<div class='net-box'>" + wifiList + "</div>";
+    // Bagian Scan WiFi
+    html += "<h3>Select Network</h3><div class='net-box'>" + wifiList + "</div>";
     
-    // 4. FORM CONFIG: Tempat input SSID, Password, dan Parameter Kustom
+    // Form Config
     html += "<form action='/save' method='POST'>";
     html += "<h3>WiFi Credentials</h3>";
-    html += "<input name='s' placeholder='SSID' required>"; // Nama WiFi
-    html += "<input name='p' type='password' placeholder='Password'>"; // Sandi WiFi
+    html += "<input name='s' placeholder='SSID' required>";
+    html += "<input name='p' type='password' placeholder='Password'>";
     
-    // Menampilkan Parameter Kustom (jika ada yang didaftarkan oleh pengguna)
     if (_paramsCount > 0) {
         html += "<h3>Custom Parameters</h3>";
         for (int i = 0; i < _paramsCount; i++) {
-            // Memberi nama input 'c0', 'c1', dst. sesuai urutan parameter
             html += "<input name='c" + String(i) + "' placeholder='" + _params[i].label + "' value='" + _params[i].value + "'>";
         }
     }
+    html += "<button type='submit'>SAVE & CONNECT</button></form>";
     
-    html += "<button type='submit'>SAVE & CONNECT</button>";
-    html += "</form>";
+    // 4. BAGIAN DASHBOARD (Fitur Baru)
+    html += "<h3>Device Status</h3>";
+    html += "<div class='dash'>";
+    html += "<div><span class='label'>IP Address:</span><span class='val'>" + ipAddr + "</span></div>";
+    html += "<div><span class='label'>Uptime:</span><span class='val'>" + uptime + "</span></div>";
+    html += "<div><span class='label'>Free RAM:</span><span class='val'>" + freeHeap + "</span></div>";
+    html += "</div>";
+
     html += "<div class='footer'>IskakINO_WifiPortal v1.0.0</div>";
     html += "</div></body></html>";
 
-    // Kirim seluruh string HTML ke browser klien dengan status HTTP 200 (OK)
+    // 5. BUTANG TINDAKAN (Restart & Reset)
+    html += "<h3>Actions</h3>";
+    html += "<div style='display:flex; gap:10px;'>";
+    html += "<button onclick=\"if(confirm('Restart device?')) location.href='/reboot'\" style='background:#f39c12;'>RESTART</button>";
+    html += "<button onclick=\"if(confirm('Clear all settings?')) location.href='/clear'\" style='background:#e74c3c;'>RESET INFO</button>";
+    html += "</div>";
+
+    html += "<div class='footer'>IskakINO_WifiPortal v1.0.0</div>";
+    html += "</div></body></html>";
+    
     _server.send(200, "text/html", html);
 }
 
