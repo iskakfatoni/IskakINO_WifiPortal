@@ -166,7 +166,86 @@ void IskakINO_WifiPortal::setBrandName(const char* name) { _brandName = name; }
 void IskakINO_WifiPortal::enableOTA(bool status) { _otaEnabled = status; }
 void IskakINO_WifiPortal::setPortalTimeout(int sec) { _timeout = sec; }
 
-void IskakINO_WifiPortal::handleRoot() { _server->send(200, "text/html", buildHTML()); }
+void IskakINO_WifiPortal::handleRoot() {
+    // 1. SCANNING WIFI: Mencari jaringan di sekitar sebelum halaman dimuat
+    // WiFi.scanNetworks() mengembalikan jumlah jaringan yang ditemukan
+    int n = WiFi.scanNetworks();
+    String wifiList = "";
+    
+    if (n == 0) {
+        wifiList = "<p style='color:#888;'>No networks found. Refresh to try again.</p>";
+    } else {
+        // Loop untuk menyusun daftar WiFi ke dalam elemen HTML
+        for (int i = 0; i < n; ++i) {
+            String ssid = WiFi.SSID(i);
+            // Setiap baris WiFi diberi event 'onclick' untuk memicu fungsi JavaScript fillSSID
+            wifiList += "<div class='nw' onclick=\"fillSSID('" + ssid + "')\">";
+            wifiList += "<span>" + ssid + "</span>";
+            wifiList += "<span class='rssi'>" + String(WiFi.RSSI(i)) + " dBm</span>"; // Menampilkan kekuatan sinyal
+            wifiList += "</div>";
+        }
+    }
+
+    // 2. HTML & CSS: Membangun antarmuka web portal
+    String html = "<html><head><title>IskakINO Config</title>";
+    html += "<meta name='viewport' content='width=device-width, initial-scale=1'>"; // Agar responsif di HP
+    
+    // CSS: Mengatur tampilan portal (Dark Theme)
+    html += "<style>";
+    html += "body{background:#1a1a1a;color:#eee;font-family:sans-serif;text-align:center;padding:20px;}";
+    html += ".card{background:#252525;padding:20px;border-radius:10px;box-shadow:0 4px 10px rgba(0,0,0,0.5);max-width:400px;margin:0 auto;}";
+    html += "h2{color:#00d1b2;} h3{font-size:1.1em;color:#888;text-align:left;margin-bottom:10px;}";
+    
+    // Styling untuk kotak daftar WiFi yang bisa di-scroll
+    html += ".net-box{margin-bottom:20px;max-height:180px;overflow-y:auto;background:#111;border-radius:5px;border:1px solid #444;}";
+    html += ".nw{display:flex;justify-content:space-between;padding:12px;border-bottom:1px solid #333;cursor:pointer;font-size:0.9em;}";
+    html += ".nw:hover{background:#00d1b2;color:#fff;}"; // Efek hover saat disentuh/diklik
+    html += ".rssi{color:#666;font-size:0.8em;} .nw:hover .rssi{color:#fff;}";
+    
+    // Styling untuk form input dan tombol
+    html += "input{width:100%;padding:12px;margin:10px 0;border-radius:5px;border:1px solid #444;background:#333;color:#fff;box-sizing:border-box;}";
+    html += "button{width:100%;padding:12px;background:#00d1b2;border:none;color:#fff;font-weight:bold;border-radius:5px;cursor:pointer;margin-top:10px;}";
+    html += "button:hover{background:#00b89c;}";
+    html += ".footer{margin-top:20px;font-size:0.8em;color:#555;}";
+    html += "</style>";
+    
+    // 3. JAVASCRIPT: Menangani interaksi klik pada daftar WiFi
+    html += "<script>";
+    // Fungsi ini mengisi input SSID dan memindahkan kursor ke input Password secara otomatis
+    html += "function fillSSID(s){ document.getElementsByName('s')[0].value=s; document.getElementsByName('p')[0].focus(); }";
+    html += "</script>";
+    
+    html += "</head><body><div class='card'>";
+    html += "<h2>IskakINO Portal</h2>";
+    
+    // Menampilkan daftar WiFi hasil scan di atas form
+    html += "<h3>Select Network</h3>";
+    html += "<div class='net-box'>" + wifiList + "</div>";
+    
+    // 4. FORM CONFIG: Tempat input SSID, Password, dan Parameter Kustom
+    html += "<form action='/save' method='POST'>";
+    html += "<h3>WiFi Credentials</h3>";
+    html += "<input name='s' placeholder='SSID' required>"; // Nama WiFi
+    html += "<input name='p' type='password' placeholder='Password'>"; // Sandi WiFi
+    
+    // Menampilkan Parameter Kustom (jika ada yang didaftarkan oleh pengguna)
+    if (_paramsCount > 0) {
+        html += "<h3>Custom Parameters</h3>";
+        for (int i = 0; i < _paramsCount; i++) {
+            // Memberi nama input 'c0', 'c1', dst. sesuai urutan parameter
+            html += "<input name='c" + String(i) + "' placeholder='" + _params[i].label + "' value='" + _params[i].value + "'>";
+        }
+    }
+    
+    html += "<button type='submit'>SAVE & CONNECT</button>";
+    html += "</form>";
+    html += "<div class='footer'>IskakINO_WifiPortal v1.0.0</div>";
+    html += "</div></body></html>";
+
+    // Kirim seluruh string HTML ke browser klien dengan status HTTP 200 (OK)
+    _server.send(200, "text/html", html);
+}
+
 void IskakINO_WifiPortal::handleOTA() {
     String html = "<html><body><form method='POST' action='/update' enctype='multipart/form-data'>";
     html += "<h2>OTA Update</h2><input type='file' name='update'><button type='submit'>Update</button></form></body></html>";
