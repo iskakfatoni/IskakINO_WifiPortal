@@ -1,6 +1,15 @@
 name: Arduino Library Compile Test
 
-on: [push, pull_request]
+on:
+  push:
+    paths:
+      - 'examples/**'       # Jalankan jika ada perubahan di folder examples
+      - 'src/**'            # Jalankan jika ada perubahan di folder source (penting!)
+      - 'library.properties' # Jalankan jika versi atau metadata berubah
+  pull_request:
+    paths:
+      - 'examples/**'
+      - 'src/**'
 
 jobs:
   build:
