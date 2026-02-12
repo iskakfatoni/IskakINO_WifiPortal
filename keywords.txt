@@ -1,0 +1,27 @@
+#######################################
+# Syntax Coloring Map For IskakINO_WifiPortal
+#######################################
+
+#######################################
+# Datatypes (Classes)
+#######################################
+
+IskakINO_WifiPortal	KEYWORD1
+IskakParam	KEYWORD1
+
+#######################################
+# Methods and Functions (Public)
+#######################################
+
+begin	KEYWORD2
+tick	KEYWORD2
+addParameter	KEYWORD2
+resetSettings	KEYWORD2
+setBrandName	KEYWORD2
+enableOTA	KEYWORD2
+setPortalTimeout	KEYWORD2
+
+#######################################
+# Constants
+#######################################
+# (Opsional jika ada konstanta khusus)
