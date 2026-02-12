@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <DNSServer.h>
+#include <LittleFS.h>
 
 // --- Seleksi Arsitektur Otomatis ---
 #if defined(ESP32)
