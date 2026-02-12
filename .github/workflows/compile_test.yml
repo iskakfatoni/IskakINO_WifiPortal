@@ -1,0 +1,35 @@
+name: Arduino Library Compile Test
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        board: ["esp32:esp32:esp32", "esp8266:esp8266:nodemcuv2"]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Arduino CLI
+        uses: arduino/setup-arduino-cli@v1
+
+      - name: Install Platform Cores
+        run: |
+          arduino-cli core update-index
+          if [[ "${{ matrix.board }}" == *"esp32"* ]]; then
+            arduino-cli core install esp32:esp32 --additional-urls https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+          else
+            arduino-cli core install esp8266:esp8266 --additional-urls http://arduino.esp8266.com/stable/package_esp8266com_index.json
+          fi
+
+      - name: Compile Examples
+        run: |
+          # Cari semua file .ino di dalam folder examples dan compile satu per satu
+          for example in $(find examples -name "*.ino"); do
+            echo "Compiling $example for ${{ matrix.board }}..."
+            arduino-cli compile --fqbn ${{ matrix.board }} $example --library .
+          done
