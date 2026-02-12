@@ -1,8 +1,7 @@
 # IskakINO_WifiPortal 🚀
-![Compile Test](https://github.com/iskakfatoni/IskakINO_WifiPortal/actions/workflows/compile_test.yml/badge.svg)
 **IskakINO_WifiPortal** adalah library Arduino yang ringan dan "zero-dependency" untuk mengelola koneksi WiFi pada ESP32 dan ESP8266. Dilengkapi dengan Captive Portal modern bertema gelap, fitur OTA (Over-The-Air) update, dan Dashboard sistem.
 
-
+![Compile Test](https://github.com/iskakfatoni/IskakINO_WifiPortal/actions/workflows/compile_test.yml/badge.svg)
 
 ## ✨ Fitur Utama
 - **Captive Portal Otomatis:** Otomatis mengarahkan browser ke halaman konfigurasi saat terhubung ke Access Point.
