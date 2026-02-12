@@ -161,32 +161,31 @@ void IskakINO_WifiPortal::handleSave() {
 }
 
 void IskakINO_WifiPortal::tick() {
-    // Gunakan tanda -> karena _dnsServer adalah pointer
-    if (_portalActive && _dnsServer) {
-        _dnsServer->processNextRequest();
-    }
-    
-    // Gunakan tanda -> karena _server adalah pointer
-    if (_server) {
-        _server->handleClient();
+    // 1. Tangani DNS Server (Captive Portal)
+    // Jika _dnsServer didefinisikan sebagai objek langsung (bukan pointer)
+    if (_portalActive) {
+        _dnsServer.processNextRequest(); // Gunakan titik (.)
     }
 
-    // Fitur Auto-Reconnect setiap 30 detik jika tidak dalam mode Portal
+    // 2. Tangani Web Server
+    // Jika _server adalah pointer (IskakWebServer*)
+    if (_server != nullptr) {
+        _server->handleClient(); // Gunakan panah (->)
+    }
+
+    // 3. Fitur Auto-Reconnect (setiap 30 detik)
     if (!_portalActive && millis() - _lastWifiCheck > 30000) {
         if (WiFi.status() != WL_CONNECTED) {
             Serial.println("[IskakINO] WiFi disconnected! Reconnecting...");
             WiFi.reconnect();
             _reconnectAttempts++;
             
-            // Jika gagal 5 kali berturut-turut, buka portal lagi
             if (_reconnectAttempts >= _maxReconnectAttempts) {
                 Serial.println("[IskakINO] Failed to reconnect. Opening Portal...");
-                // Pastikan fungsi ini namanya startPortal() atau setupPortal() 
-                // sesuai dengan yang ada di file .h
-                setupPortal(); 
+                setupPortal(); // Pastikan nama fungsi ini sinkron dengan .h
             }
         } else {
-            _reconnectAttempts = 0; // Reset jika berhasil konek
+            _reconnectAttempts = 0;
         }
         _lastWifiCheck = millis();
     }
