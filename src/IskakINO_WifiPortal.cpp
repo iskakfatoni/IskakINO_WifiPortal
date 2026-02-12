@@ -1,5 +1,11 @@
 #include "IskakINO_WifiPortal.h"
-#include <Update.h>
+// Logika cerdas untuk mendeteksi tipe board
+#if defined(ESP32)
+  #include <Update.h>
+#elif defined(ESP8266)
+  #include <Updater.h>
+#endif
+
 
 IskakINO_WifiPortal::IskakINO_WifiPortal() {
     _server = new IskakWebServer(80);
