@@ -139,12 +139,25 @@ void IskakINO_WifiPortal::handleSave() {
 void IskakINO_WifiPortal::tick() {
     if (_portalActive) {
         _dnsServer.processNextRequest();
-        _server->handleClient();
-        
-        if (_timeout > 0 && (millis() - _portalStartTime > _timeout * 1000)) {
-            Serial.println("[IskakINO] Timeout! Restarting...");
-            ESP.restart();
+    }
+    _server.handleClient();
+
+    // Fitur Auto-Reconnect setiap 30 detik jika tidak dalam mode Portal
+    if (!_portalActive && millis() - _lastWifiCheck > 30000) {
+        if (WiFi.status() != WL_CONNECTED) {
+            Serial.println("[IskakINO] WiFi disconnected! Reconnecting...");
+            WiFi.reconnect();
+            _reconnectAttempts++;
+            
+            // Jika gagal 5 kali berturut-turut, buka portal lagi
+            if (_reconnectAttempts >= _maxReconnectAttempts) {
+                Serial.println("[IskakINO] Failed to reconnect. Opening Portal...");
+                startPortal(); 
+            }
+        } else {
+            _reconnectAttempts = 0; // Reset jika berhasil konek
         }
+        _lastWifiCheck = millis();
     }
 }
 
