@@ -1,4 +1,5 @@
 #include "IskakINO_WifiPortal.h"
+#include <Update.h>
 
 IskakINO_WifiPortal::IskakINO_WifiPortal() {
     _server = new IskakWebServer(80);
