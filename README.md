@@ -11,6 +11,28 @@
 - **Hybrid Support:** Satu kode yang sama untuk ESP32 dan ESP8266 (Agnostik Hardware).
 - **Modern Dark UI:** Tampilan antarmuka yang bersih dan responsif di perangkat mobile.
 
+## 🆕 Fitur Terbaru
+- **Auto WiFi Scan:** Tidak perlu mengetik SSID secara manual. Portal akan memindai jaringan di sekitar dan Anda cukup klik untuk mengisi otomatis.
+- **Enhanced Dashboard:** Info real-time alamat IP, Uptime perangkat, dan penggunaan Free RAM yang lebih akurat.
+- **Maintenance Actions:**
+  - **Restart:** Reboot perangkat secara remote melalui dashboard.
+  - **Reset Info:** Menghapus seluruh konfigurasi WiFi dan Parameter yang tersimpan di LittleFS untuk kembali ke pengaturan pabrik.
+- **Smart Auto-Reconnect:** Logika cerdas untuk mencoba menyambung kembali ke WiFi jika koneksi terputus tanpa menghentikan program utama.
+
+---
+
+## 🖥️ Tampilan Dashboard & Maintenance
+Setelah terhubung ke Access Point perangkat (Default IP: `192.168.4.1`), Anda akan melihat panel kontrol baru:
+
+
+
+### Cara Kerja Tombol:
+1. **Daftar WiFi:** Klik pada nama SSID yang muncul, maka kolom input SSID di bawahnya akan terisi otomatis.
+2. **Restart:** Memicu `ESP.restart()` melalui perintah HTTP.
+3. **Reset Info:** Melakukan format pada `LittleFS` untuk membersihkan semua data sensitif atau konfigurasi lama yang salah.
+
+---
+
 ## 🛠 Instalasi
 1. Download repository ini sebagai `.zip`.
 2. Buka Arduino IDE, pilih menu **Sketch** > **Include Library** > **Add .ZIP Library...**.
