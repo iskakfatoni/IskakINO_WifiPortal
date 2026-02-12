@@ -58,7 +58,13 @@ void IskakINO_WifiPortal::setupPortal() {
         }, [&]() {
             HTTPUpload& upload = _server->upload();
             if (upload.status == UPLOAD_FILE_START) {
-                if (!Update.begin(UPDATE_SIZE_UNKNOWN)) Update.printError(Serial);
+                #if defined(ESP32)
+                    if (!Update.begin(UPDATE_SIZE_UNKNOWN)) Update.printError(Serial);
+                #elif defined(ESP8266)
+                    // Di ESP8266, kita harus menentukan ukuran atau menggunakan trik U_FS/U_FLASH
+                    uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+                    if (!Update.begin(maxSketchSpace)) Update.printError(Serial);
+                #endif
             } else if (upload.status == UPLOAD_FILE_WRITE) {
                 if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) Update.printError(Serial);
             } else if (upload.status == UPLOAD_FILE_END) {
@@ -102,7 +108,13 @@ String IskakINO_WifiPortal::buildHTML() {
 
 String IskakINO_WifiPortal::getSystemInfo() {
     String info = "<b>System Dashboard</b><br>";
-    info += "Chip: " + String(ESP.getChipModel()) + "<br>";
+    #if defined(ESP32)
+        info += "Chip: " + String(ESP.getChipModel()) + "<br>";
+    #elif defined(ESP8266)
+        info += "Chip: ESP8266<br>";
+        info += "Core: " + String(ESP.getCoreVersion()) + "<br>";
+    #endif
+    info += "Free RAM: " + String(ESP.getFreeHeap() / 1024) + " KB<br>";
     info += "Free RAM: " + String(ESP.getFreeHeap() / 1024) + " KB<br>";
     info += "Uptime: " + String(millis() / 1000) + " sec";
     return info;
