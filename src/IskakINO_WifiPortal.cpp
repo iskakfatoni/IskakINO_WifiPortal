@@ -161,10 +161,15 @@ void IskakINO_WifiPortal::handleSave() {
 }
 
 void IskakINO_WifiPortal::tick() {
-    if (_portalActive) {
-        _dnsServer.processNextRequest();
+    // Gunakan tanda -> karena _dnsServer adalah pointer
+    if (_portalActive && _dnsServer) {
+        _dnsServer->processNextRequest();
     }
-    _server.handleClient();
+    
+    // Gunakan tanda -> karena _server adalah pointer
+    if (_server) {
+        _server->handleClient();
+    }
 
     // Fitur Auto-Reconnect setiap 30 detik jika tidak dalam mode Portal
     if (!_portalActive && millis() - _lastWifiCheck > 30000) {
@@ -176,7 +181,9 @@ void IskakINO_WifiPortal::tick() {
             // Jika gagal 5 kali berturut-turut, buka portal lagi
             if (_reconnectAttempts >= _maxReconnectAttempts) {
                 Serial.println("[IskakINO] Failed to reconnect. Opening Portal...");
-                startPortal(); 
+                // Pastikan fungsi ini namanya startPortal() atau setupPortal() 
+                // sesuai dengan yang ada di file .h
+                setupPortal(); 
             }
         } else {
             _reconnectAttempts = 0; // Reset jika berhasil konek
@@ -191,7 +198,7 @@ void IskakINO_WifiPortal::enableOTA(bool status) { _otaEnabled = status; }
 void IskakINO_WifiPortal::setPortalTimeout(int sec) { _timeout = sec; }
 
 void IskakINO_WifiPortal::handleRoot() {
-    // 1. SCANNING WIFI: Mencari jaringan di sekitar sebelum halaman dimuat
+    // 1. SCANNING WIFI
     int n = WiFi.scanNetworks();
     String wifiList = "";
     
@@ -207,7 +214,7 @@ void IskakINO_WifiPortal::handleRoot() {
         }
     }
 
-    // 2. SYSTEM INFO: Menghitung statistik sistem (Ringan & Cepat)
+    // 2. SYSTEM INFO
     unsigned long sec = millis() / 1000;
     unsigned long min = sec / 60;
     unsigned long hr = min / 60;
@@ -223,65 +230,48 @@ void IskakINO_WifiPortal::handleRoot() {
     html += "body{background:#1a1a1a;color:#eee;font-family:sans-serif;text-align:center;padding:20px;}";
     html += ".card{background:#252525;padding:20px;border-radius:10px;box-shadow:0 4px 10px rgba(0,0,0,0.5);max-width:400px;margin:0 auto;}";
     html += "h2{color:#00d1b2;} h3{font-size:1.1em;color:#888;text-align:left;margin:15px 0 5px 0;}";
-    
-    // CSS Daftar WiFi
     html += ".net-box{margin-bottom:20px;max-height:150px;overflow-y:auto;background:#111;border-radius:5px;border:1px solid #444;}";
     html += ".nw{display:flex;justify-content:space-between;padding:12px;border-bottom:1px solid #333;cursor:pointer;font-size:0.9em;}";
     html += ".nw:hover{background:#00d1b2;color:#fff;} .rssi{color:#666;font-size:0.8em;}";
-    
-    // CSS Dashboard (Info Sistem)
     html += ".dash{background:#111;padding:10px;border-radius:5px;border-left:4px solid #00d1b2;text-align:left;font-size:0.85em;margin-top:20px;}";
     html += ".dash div{display:flex;justify-content:space-between;margin:3px 0;}";
     html += ".label{color:#888;} .val{color:#00d1b2;font-weight:bold;}";
-    
     html += "input{width:100%;padding:12px;margin:10px 0;border-radius:5px;border:1px solid #444;background:#333;color:#fff;box-sizing:border-box;}";
     html += "button{width:100%;padding:12px;background:#00d1b2;border:none;color:#fff;font-weight:bold;border-radius:5px;cursor:pointer;margin-top:10px;}";
     html += ".footer{margin-top:20px;font-size:0.8em;color:#555;}";
     html += "</style>";
-    
     html += "<script>function fillSSID(s){document.getElementsByName('s')[0].value=s;document.getElementsByName('p')[0].focus();}</script>";
-    html += "</head><body><div class='card'>";
-    html += "<h2>IskakINO Portal</h2>";
+    html += "</head><body><div class='card'><h2>IskakINO Portal</h2>";
     
-    // Bagian Scan WiFi
     html += "<h3>Select Network</h3><div class='net-box'>" + wifiList + "</div>";
     
-    // Form Config
-    html += "<form action='/save' method='POST'>";
-    html += "<h3>WiFi Credentials</h3>";
+    html += "<form action='/save' method='POST'><h3>WiFi Credentials</h3>";
     html += "<input name='s' placeholder='SSID' required>";
     html += "<input name='p' type='password' placeholder='Password'>";
     
-    if (_paramsCount > 0) {
+    // PERBAIKAN: _paramCount (tanpa 's') dan tanda panah -> karena _params[i] adalah pointer
+    if (_paramCount > 0) {
         html += "<h3>Custom Parameters</h3>";
-        for (int i = 0; i < _paramsCount; i++) {
-            html += "<input name='c" + String(i) + "' placeholder='" + _params[i].label + "' value='" + _params[i].value + "'>";
+        for (int i = 0; i < _paramCount; i++) {
+            html += "<input name='c" + String(i) + "' placeholder='" + _params[i]->label + "' value='" + _params[i]->value + "'>";
         }
     }
     html += "<button type='submit'>SAVE & CONNECT</button></form>";
     
-    // 4. BAGIAN DASHBOARD (Fitur Baru)
-    html += "<h3>Device Status</h3>";
-    html += "<div class='dash'>";
+    html += "<h3>Device Status</h3><div class='dash'>";
     html += "<div><span class='label'>IP Address:</span><span class='val'>" + ipAddr + "</span></div>";
     html += "<div><span class='label'>Uptime:</span><span class='val'>" + uptime + "</span></div>";
-    html += "<div><span class='label'>Free RAM:</span><span class='val'>" + freeHeap + "</span></div>";
-    html += "</div>";
+    html += "<div><span class='label'>Free RAM:</span><span class='val'>" + freeHeap + "</span></div></div>";
 
-    html += "<div class='footer'>IskakINO_WifiPortal v1.0.0</div>";
-    html += "</div></body></html>";
-
-    // 5. BUTANG TINDAKAN (Restart & Reset)
-    html += "<h3>Actions</h3>";
-    html += "<div style='display:flex; gap:10px;'>";
+    html += "<h3>Actions</h3><div style='display:flex; gap:10px;'>";
     html += "<button onclick=\"if(confirm('Restart device?')) location.href='/reboot'\" style='background:#f39c12;'>RESTART</button>";
     html += "<button onclick=\"if(confirm('Clear all settings?')) location.href='/clear'\" style='background:#e74c3c;'>RESET INFO</button>";
-    html += "</div>";
-
-    html += "<div class='footer'>IskakINO_WifiPortal v1.0.0</div>";
-    html += "</div></body></html>";
+    html += "</div><div class='footer'>IskakINO_WifiPortal v1.0.0</div></div></body></html>";
     
-    _server.send(200, "text/html", html);
+    // PERBAIKAN: Gunakan -> karena _server adalah pointer
+    if (_server) {
+        _server->send(200, "text/html", html);
+    }
 }
 
 void IskakINO_WifiPortal::handleOTA() {
