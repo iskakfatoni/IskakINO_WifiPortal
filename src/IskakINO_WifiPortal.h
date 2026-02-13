@@ -44,7 +44,8 @@ class IskakINO_WifiPortal {
 
     // --- Maintenance ---
     void enableOTA(bool status);
-    void setPortalTimeout(int sec); 
+    void setPortalTimeout(int sec);
+    void setupPortal();
 
   private:
     IskakWebServer* _server;
@@ -67,7 +68,6 @@ class IskakINO_WifiPortal {
     uint8_t _paramCount = 0;
 
     // --- Handlers ---
-    void setupPortal();
     void handleRoot();      
     void handleSave();      
     void handleOTA();       
