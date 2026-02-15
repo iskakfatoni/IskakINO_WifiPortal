@@ -1,65 +1,75 @@
-# IskakINO_WifiPortal 🚀
-**IskakINO_WifiPortal** adalah library Arduino yang ringan dan "zero-dependency" untuk mengelola koneksi WiFi pada ESP32 dan ESP8266. Dilengkapi dengan Captive Portal modern bertema gelap, fitur OTA (Over-The-Air) update, dan Dashboard sistem.
+# 🚀 IskakINO_WifiPortal
 
-![Compile Test](https://github.com/iskakfatoni/IskakINO_WifiPortal/actions/workflows/compile_test.yml/badge.svg)
+**IskakINO_WifiPortal** adalah library manajemen WiFi yang *powerful*, ringan, dan estetik untuk **ESP8266** dan **ESP32**. Library ini dirancang untuk memudahkan pengembang IoT dalam membuat perangkat yang bisa dikonfigurasi lewat web browser tanpa perlu melakukan *hardcode* SSID dan Password pada kode program.
+
+---
 
 ## ✨ Fitur Utama
-- **Captive Portal Otomatis:** Otomatis mengarahkan browser ke halaman konfigurasi saat terhubung ke Access Point.
-- **Custom Parameters:** Tambahkan input kustom (seperti API Key, MQTT Broker, dll) langsung dari halaman web.
-- **Web-Based OTA:** Update firmware perangkat secara nirkabel melalui browser.
-- **System Dashboard:** Pantau status RAM, tipe Chip, dan Uptime perangkat secara real-time.
-- **Hybrid Support:** Satu kode yang sama untuk ESP32 dan ESP8266 (Agnostik Hardware).
-- **Modern Dark UI:** Tampilan antarmuka yang bersih dan responsif di perangkat mobile.
-
-## 🆕 Fitur Terbaru
-- **Auto WiFi Scan:** Tidak perlu mengetik SSID secara manual. Portal akan memindai jaringan di sekitar dan Anda cukup klik untuk mengisi otomatis.
-- **Enhanced Dashboard:** Info real-time alamat IP, Uptime perangkat, dan penggunaan Free RAM yang lebih akurat.
-- **Maintenance Actions:**
-  - **Restart:** Reboot perangkat secara remote melalui dashboard.
-  - **Reset Info:** Menghapus seluruh konfigurasi WiFi dan Parameter yang tersimpan di LittleFS untuk kembali ke pengaturan pabrik.
-- **Smart Auto-Reconnect:** Logika cerdas untuk mencoba menyambung kembali ke WiFi jika koneksi terputus tanpa menghentikan program utama.
+* 📱 **Captive Portal Otomatis**: Portal konfigurasi akan terbuka otomatis jika WiFi tidak ditemukan atau gagal terhubung.
+* 📊 **Dashboard Sistem**: Pantau kesehatan perangkat (Free RAM, Uptime, dan IP Address) secara real-time langsung dari browser.
+* 🔍 **WiFi Scanner**: Pengguna cukup memilih SSID dari daftar jaringan yang tersedia (tidak perlu mengetik manual).
+* 💾 **Custom Parameters**: Simpan data tambahan seperti *API Token*, *User ID*, atau *Topic MQTT* ke memori permanen (LittleFS/Preferences).
+* ☁️ **OTA (Over-The-Air) Update**: Perbarui firmware perangkat secara nirkabel melalui halaman web portal.
+* 🎨 **Modern UI**: Antarmuka web yang responsif dengan *Dark Mode* yang nyaman di mata.
+* 🖱️ **Manual Trigger**: Mendukung penggunaan tombol fisik untuk memaksa portal terbuka kembali kapan saja.
 
 ---
 
-## 🖥️ Tampilan Dashboard & Maintenance
-Setelah terhubung ke Access Point perangkat (Default IP: `192.168.4.1`), Anda akan melihat panel kontrol baru:
+## 📂 Contoh Penggunaan (Examples)
+Library ini menyertakan 10 contoh lengkap untuk berbagai skenario project IoT:
 
-
-
-### Cara Kerja Tombol:
-1. **Daftar WiFi:** Klik pada nama SSID yang muncul, maka kolom input SSID di bawahnya akan terisi otomatis.
-2. **Restart:** Memicu `ESP.restart()` melalui perintah HTTP.
-3. **Reset Info:** Melakukan format pada `LittleFS` untuk membersihkan semua data sensitif atau konfigurasi lama yang salah.
+1.  **01_Simple_Config**: Dasar penggunaan koneksi WiFi otomatis.
+2.  **02_Basic_Portal**: Cara kustomisasi nama AP dan password portal.
+3.  **03_Custom_Parameters**: Implementasi penyimpanan variabel kustom.
+4.  **04_OTA_Update**: Panduan fitur pembaruan firmware jarak jauh.
+5.  **05_Manual_Trigger**: Cara memicu portal menggunakan tombol fisik (GPIO).
+6.  **06_Portal_Timeout**: Menutup portal otomatis untuk keamanan & penghematan daya.
+7.  **07_Deep_Sleep**: Implementasi pada perangkat berbasis baterai.
+8.  **08_Multiple_SSID**: Logika prioritas koneksi ke beberapa jaringan WiFi.
+9.  **09_Web_Terminal**: Mengirim perintah dan menerima log Serial via Web.
+10. **10_NTP_Clock**: Sinkronisasi waktu otomatis (WIB) tanpa modul RTC.
 
 ---
 
-## 🛠 Instalasi
-1. Download repository ini sebagai `.zip`.
-2. Buka Arduino IDE, pilih menu **Sketch** > **Include Library** > **Add .ZIP Library...**.
-3. Pilih file yang baru saja didownload.
-4. Jangan lupa instal dependensi (untuk ESP8266 pastikan LittleFS sudah terpasang).
+## 🛠️ Instalasi
+
+1.  Unduh repositori ini dalam format **.ZIP**.
+2.  Buka Arduino IDE, pilih menu **Sketch** -> **Include Library** -> **Add .ZIP Library...**.
+3.  Pilih file yang sudah diunduh tadi.
+4.  Pastikan board ESP32 atau ESP8266 sudah terpasang di Board Manager kamu.
+
+---
 
 ## 🚀 Cara Penggunaan Singkat
+
+Berikut adalah cara paling simpel untuk mengimplementasikan library ini:
 
 ```cpp
 #include <IskakINO_WifiPortal.h>
 
 IskakINO_WifiPortal portal;
-char myApiKey[32] = "default_key";
 
 void setup() {
-  portal.addParameter("api_key", "API Key", myApiKey, 32);
-  portal.enableOTA(true);
-  
-  if (portal.begin("IskakINO_AP")) {
-    // Terhubung ke WiFi!
-  }
+    Serial.begin(115200);
+    
+    // Konfigurasi Brand dan Mulai Portal
+    portal.setBrandName("IskakINO Project");
+    portal.begin("IskakINO-AP", "12345678");
 }
 
 void loop() {
-  portal.tick(); // Wajib untuk menjalankan web server & DNS
+    // Wajib dipanggil agar server tetap berjalan
+    portal.tick();
 }
 ```
+
+## 📋 Persyaratan Sistem
+Library ini dibangun menggunakan library standar berikut (tidak perlu instal library tambahan):
+ESP8266: ESP8266WiFi, ESP8266WebServer, DNSServer, LittleFS.
+ESP32: WiFi, WebServer, DNSServer, Update, Preferences.
+
+## 🤝 Kontribusi
+Ingin menambahkan fitur atau melaporkan bug? Silakan buat Pull Request atau ajukan di kolom Issues. Kontribusi kamu sangat berarti untuk pengembangan library ini!
 
 ## 📂 Struktur Library
 * **src/** : Berisi kode sumber utama (`IskakINO_WifiPortal.h` & `IskakINO_WifiPortal.cpp`).
