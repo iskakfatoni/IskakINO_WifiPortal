@@ -14,8 +14,15 @@ void printLocalTime() {
         Serial.println("[NTP] Gagal mengambil waktu");
         return;
     }
+
+    // Buat buffer untuk menampung teks waktu
+    char timeStringBuff[50]; 
+    
     // Format: Hari, Tanggal Bulan Tahun Jam:Menit:Detik
-    Serial.println(&timeinfo, "[WAKTU] %A, %d %B %Y %H:%M:%S");
+    strftime(timeStringBuff, sizeof(timeStringBuff), "%A, %d %B %Y %H:%M:%S", &timeinfo);
+    
+    Serial.print("[WAKTU] ");
+    Serial.println(timeStringBuff);
 }
 
 void setup() {
