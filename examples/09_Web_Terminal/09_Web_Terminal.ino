@@ -2,6 +2,12 @@
 
 IskakINO_WifiPortal portal;
 
+// --- PERBAIKAN UNTUK ESP32 ---
+#ifndef LED_BUILTIN
+  #define LED_BUILTIN 2  // Paksa ke GPIO 2 jika tidak terdefinisi
+#endif
+
+// -----------------------------
 // Variabel untuk menampung log dan perintah
 char cmdLog[100] = "Waiting for command...";
 char lastResponse[50] = "None";
