@@ -279,6 +279,11 @@ void IskakINO_WifiPortal::handleOTA() {
     _server->send(200, "text/html", html);
 }
 
+void IskakINO_WifiPortal::handle() {
+    handleOTA(); // Urus update jika ada request
+}
+
+
 // --- Storage Logic ---
 bool IskakINO_WifiPortal::loadConfig() {
     #if defined(ESP32)
