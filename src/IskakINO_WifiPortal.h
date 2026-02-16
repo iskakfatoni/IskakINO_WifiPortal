@@ -72,7 +72,8 @@ class IskakINO_WifiPortal {
     void handleSave();      
     void handleOTA();       
     void handleDoOTA();     
-    
+    void handle(); // Fungsi utama untuk dipanggil di loop()
+
     // --- Storage & Helpers ---
     bool loadConfig();
     void saveConfig(String ssid, String pass);
