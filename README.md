@@ -1,4 +1,9 @@
 # 🚀 IskakINO_WifiPortal
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/iskakfatoni/IskakINO_WifiPortal/compile.yml?branch=main&style=for-the-badge&logo=github&label=Build%20Status)
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/iskakfatoni/IskakINO_WifiPortal?style=for-the-badge&logo=git&color=orange)
+![Arduino Library](https://img.shields.io/badge/Arduino-Library-00979D?style=for-the-badge&logo=arduino&logoColor=white)
+![Platform](https://img.shields.io/badge/Platform-ESP8266%20%7C%20ESP32-blue?style=for-the-badge&logo=espressif&logoColor=white)
+![GitHub License](https://img.shields.io/github/license/iskakfatoni/IskakINO_WifiPortal?style=for-the-badge&color=green)
 
 **IskakINO_WifiPortal** adalah library manajemen WiFi yang *powerful*, ringan, dan estetik untuk **ESP8266** dan **ESP32**. Library ini dirancang untuk memudahkan pengembang IoT dalam membuat perangkat yang bisa dikonfigurasi lewat web browser tanpa perlu melakukan *hardcode* SSID dan Password pada kode program.
 
