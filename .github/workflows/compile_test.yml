@@ -28,8 +28,8 @@ jobs:
           # Inisialisasi konfigurasi
           arduino-cli config init
           
-          # Tambahkan URL Board Manager untuk ESP8266 dan ESP32
-          arduino-cli config set board_manager.additional_urls https://arduino.esp8266.com/stable/package_esp8266com_index.json,https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+          # UPDATE URL DISINI: Menggunakan URL resmi terbaru dari Espressif
+          arduino-cli config set board_manager.additional_urls https://arduino.esp8266.com/stable/package_esp8266com_index.json,https://dl.espressif.com/dl/package_esp32_index.json
           
           # Update index board manager
           arduino-cli core update-index
@@ -40,20 +40,16 @@ jobs:
 
       - name: Install Dependencies & External Libraries
         run: |
-          # Buat folder library jika belum ada
           mkdir -p $HOME/Arduino/libraries
           
-          # Clone Library NTP kamu agar bisa terdeteksi saat compile
-          # Menggunakan git clone ke path library standar Arduino
+          # Clone Library NTP kamu
           git clone https://github.com/iskakfatoni/IskakINO_FastNTP.git $HOME/Arduino/libraries/IskakINO_FastNTP
           
-          # Link library utama IskakINO_WifiPortal (repo ini sendiri) ke folder library
+          # Link library utama IskakINO_WifiPortal
           ln -s $GITHUB_WORKSPACE $HOME/Arduino/libraries/IskakINO_WifiPortal
 
       - name: Compile Examples
         run: |
-          # Mencari semua file .ino di dalam folder examples dan compile satu per satu
-          # Menambahkan library path secara eksplisit pada perintah compile
           for example in $(find examples -name "*.ino"); do
             echo "-------------------------------------------------------"
             echo "Compiling $example for ${{ matrix.board }}..."
