@@ -1,45 +1,49 @@
-name: Arduino Library Compile Test
+name: Compile Examples
 
 on:
   push:
-    paths:
-      - 'src/**'
-      - 'examples/**'
-      - 'library.properties'
+    branches: [ main, master ]
   pull_request:
+    branches: [ main, master ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     strategy:
       matrix:
-        board: ["esp32:esp32:esp32", "esp8266:esp8266:nodemcuv2"]
+        board: [ "esp8266:esp8266:nodemcuv2", "esp32:esp32:esp32" ]
 
     steps:
-      - name: Checkout code
+      - name: Checkout Code
         uses: actions/checkout@v3
 
       - name: Install Arduino CLI
-        uses: arduino/setup-arduino-cli@v1
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
+          sudo mv bin/arduino-cli /usr/local/bin/
 
-      - name: Install Platform Cores
+      - name: Update Board Manager
         run: |
           arduino-cli core update-index
-          if [ "${{ matrix.board }}" == "esp32:esp32:esp32" ]; then
-            arduino-cli core install esp32:esp32 --additional-urls https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
-          else
-            arduino-cli core install esp8266:esp8266 --additional-urls http://arduino.esp8266.com/stable/package_esp8266com_index.json
-          fi
+          arduino-cli core install esp8266:esp8266
+          arduino-cli core install esp32:esp32
 
-      - name: Install Library Dependencies
+      - name: Install Dependencies & External Libraries
         run: |
-          # Tambahkan library pendukung jika diperlukan di sini
-          # arduino-cli lib install "ArduinoJson"
+          # Buat folder library jika belum ada
+          mkdir -p $HOME/Arduino/libraries
+          
+          # Clone Library NTP kamu agar bisa terdeteksi saat compile
+          git clone https://github.com/iskakfatoni/IskakINO_FastNTP.git $HOME/Arduino/libraries/IskakINO_FastNTP
+          
+          # Link library utama IskakINO_WifiPortal (repo ini sendiri)
+          ln -s $GITHUB_WORKSPACE $HOME/Arduino/libraries/IskakINO_WifiPortal
 
       - name: Compile Examples
         run: |
-          # Mencari semua file .ino di dalam folder examples dan mencobanya satu per satu
+          # Mencari semua file .ino di dalam folder examples dan compile satu per satu
           for example in $(find examples -name "*.ino"); do
             echo "Compiling $example..."
-            arduino-cli compile --fqbn ${{ matrix.board }} --library . $example
+            arduino-cli compile --fqbn ${{ matrix.board }} $example --libraries $HOME/Arduino/libraries
           done
