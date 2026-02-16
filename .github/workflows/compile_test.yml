@@ -23,9 +23,18 @@ jobs:
           curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
           sudo mv bin/arduino-cli /usr/local/bin/
 
-      - name: Update Board Manager
+      - name: Configure Arduino CLI & Core
         run: |
+          # Inisialisasi konfigurasi
+          arduino-cli config init
+          
+          # Tambahkan URL Board Manager untuk ESP8266 dan ESP32
+          arduino-cli config set board_manager.additional_urls https://arduino.esp8266.com/stable/package_esp8266com_index.json,https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+          
+          # Update index board manager
           arduino-cli core update-index
+          
+          # Install core board
           arduino-cli core install esp8266:esp8266
           arduino-cli core install esp32:esp32
 
@@ -35,15 +44,19 @@ jobs:
           mkdir -p $HOME/Arduino/libraries
           
           # Clone Library NTP kamu agar bisa terdeteksi saat compile
+          # Menggunakan git clone ke path library standar Arduino
           git clone https://github.com/iskakfatoni/IskakINO_FastNTP.git $HOME/Arduino/libraries/IskakINO_FastNTP
           
-          # Link library utama IskakINO_WifiPortal (repo ini sendiri)
+          # Link library utama IskakINO_WifiPortal (repo ini sendiri) ke folder library
           ln -s $GITHUB_WORKSPACE $HOME/Arduino/libraries/IskakINO_WifiPortal
 
       - name: Compile Examples
         run: |
           # Mencari semua file .ino di dalam folder examples dan compile satu per satu
+          # Menambahkan library path secara eksplisit pada perintah compile
           for example in $(find examples -name "*.ino"); do
-            echo "Compiling $example..."
-            arduino-cli compile --fqbn ${{ matrix.board }} $example --libraries $HOME/Arduino/libraries
+            echo "-------------------------------------------------------"
+            echo "Compiling $example for ${{ matrix.board }}..."
+            echo "-------------------------------------------------------"
+            arduino-cli compile --fqbn ${{ matrix.board }} "$example" --libraries $HOME/Arduino/libraries
           done
