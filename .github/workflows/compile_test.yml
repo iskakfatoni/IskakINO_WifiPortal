@@ -28,7 +28,7 @@ jobs:
           # Inisialisasi konfigurasi
           arduino-cli config init
           
-          # GUNAKAN URL TERBARU & PALING STABIL DISINI:
+          # GUNAKAN URL RESMI TERBARU (ESPRESSIF GITHUB PAGES):
           arduino-cli config set board_manager.additional_urls https://arduino.esp8266.com/stable/package_esp8266com_index.json,https://espressif.github.io/arduino-esp32/package_esp32_index.json
           
           # Update index board manager
