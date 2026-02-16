@@ -38,6 +38,7 @@ class IskakINO_WifiPortal {
     void tick(); 
     void resetSettings();
     void setBrandName(const char* name);
+    void handle(); // Fungsi utama untuk dipanggil di loop()
 
     // --- Custom Parameters ---
     void addParameter(const char* id, const char* label, char* value, int length);
@@ -72,8 +73,7 @@ class IskakINO_WifiPortal {
     void handleSave();      
     void handleOTA();       
     void handleDoOTA();     
-    void handle(); // Fungsi utama untuk dipanggil di loop()
-
+    
     // --- Storage & Helpers ---
     bool loadConfig();
     void saveConfig(String ssid, String pass);
