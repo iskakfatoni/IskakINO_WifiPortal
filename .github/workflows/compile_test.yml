@@ -23,36 +23,26 @@ jobs:
           curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
           sudo mv bin/arduino-cli /usr/local/bin/
 
-      - name: Configure Arduino CLI & Core
+      - name: Install Cores
         run: |
-          # Inisialisasi konfigurasi
-          arduino-cli config init
+          # Langsung update index dengan menyertakan URL (Tanpa simpan di config dulu biar gak error)
+          arduino-cli core update-index --additional-urls https://arduino.esp8266.com/stable/package_esp8266com_index.json,https://espressif.github.io/arduino-esp32/package_esp32_index.json
           
-          # GUNAKAN URL RESMI TERBARU (ESPRESSIF GITHUB PAGES):
-          arduino-cli config set board_manager.additional_urls https://arduino.esp8266.com/stable/package_esp8266com_index.json,https://espressif.github.io/arduino-esp32/package_esp32_index.json
-          
-          # Update index board manager
-          arduino-cli core update-index
-          
-          # Install core board
-          arduino-cli core install esp8266:esp8266
-          arduino-cli core install esp32:esp32
+          # Install core menggunakan URL yang sama
+          arduino-cli core install esp8266:esp8266 --additional-urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
+          arduino-cli core install esp32:esp32 --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
 
-      - name: Install Dependencies & External Libraries
+      - name: Install Libraries
         run: |
           mkdir -p $HOME/Arduino/libraries
-          
-          # Clone Library NTP kamu
+          # Clone library NTP pendukung
           git clone https://github.com/iskakfatoni/IskakINO_FastNTP.git $HOME/Arduino/libraries/IskakINO_FastNTP
-          
-          # Link library utama IskakINO_WifiPortal
+          # Link library utama kamu
           ln -s $GITHUB_WORKSPACE $HOME/Arduino/libraries/IskakINO_WifiPortal
 
       - name: Compile Examples
         run: |
           for example in $(find examples -name "*.ino"); do
-            echo "-------------------------------------------------------"
-            echo "Compiling $example for ${{ matrix.board }}..."
-            echo "-------------------------------------------------------"
+            echo "Compiling $example..."
             arduino-cli compile --fqbn ${{ matrix.board }} "$example" --libraries $HOME/Arduino/libraries
           done
