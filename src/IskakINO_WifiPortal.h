@@ -31,7 +31,8 @@ struct IskakParam {
 class IskakINO_WifiPortal {
   public:
     IskakINO_WifiPortal();
-    
+    IskakWebServer* _server;
+    DNSServer _dnsServer;
     // --- Fungsi Utama ---
     // Mencoba konek ke WiFi tersimpan, jika gagal buka Portal
     bool begin(const char* apName, const char* apPass = NULL);
@@ -49,9 +50,6 @@ class IskakINO_WifiPortal {
     void setupPortal();
 
   private:
-    IskakWebServer* _server;
-    DNSServer _dnsServer;
-    
     const char* _apName;
     const char* _apPass;
     const char* _brandName = "IskakINO Portal";
