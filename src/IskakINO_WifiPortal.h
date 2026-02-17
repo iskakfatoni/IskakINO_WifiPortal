@@ -32,6 +32,8 @@ class IskakINO_WifiPortal {
   public:
     IskakINO_WifiPortal();
     IskakWebServer* _server;
+    IskakWebServer* server() { return _server; }
+
     DNSServer _dnsServer;
     // --- Fungsi Utama ---
     // Mencoba konek ke WiFi tersimpan, jika gagal buka Portal
