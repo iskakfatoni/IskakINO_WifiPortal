@@ -104,7 +104,11 @@ void IskakINO_WifiPortal::setupPortal() {
 }
 
 String IskakINO_WifiPortal::buildHTML() {
-    String s = "<html><head><meta name='viewport' content='width=device-width,initial-scale=1'><style>";
+
+    String s;
+    s.reserve(5000);  // 🔥 Cegah fragmentasi heap ESP32/ESP8266
+
+    s = "<html><head><meta name='viewport' content='width=device-width,initial-scale=1'><style>";
     s += "body{font-family:sans-serif;background:#121212;color:#eee;padding:20px;text-align:center;}";
     s += "input{width:100%;padding:12px;margin:8px 0;border-radius:5px;border:1px solid #333;background:#222;color:#fff;}";
     s += "button{width:100%;padding:12px;background:#00adb5;border:none;color:#fff;font-weight:bold;margin-top:10px;cursor:pointer;}";
@@ -120,12 +124,16 @@ String IskakINO_WifiPortal::buildHTML() {
     if (_paramCount > 0) {
         s += "<h3>Parameters</h3>";
         for (int i = 0; i < _paramCount; i++) {
-            s += "<input name='" + String(_params[i]->id) + "' placeholder='" + String(_params[i]->label) + "'>";
+            s += "<input name='" + String(_params[i]->id) + 
+                 "' placeholder='" + String(_params[i]->label) + "'>";
         }
     }
     
     s += "<button type='submit'>SAVE & RECONNECT</button></form>";
-    if (_otaEnabled) s += "<br><a href='/update' style='color:#555;font-size:0.8em;'>Firmware Update</a>";
+    
+    if (_otaEnabled)
+        s += "<br><a href='/update' style='color:#555;font-size:0.8em;'>Firmware Update</a>";
+    
     s += "</body></html>";
     return s;
 }
@@ -138,7 +146,6 @@ String IskakINO_WifiPortal::getSystemInfo() {
         info += "Chip: ESP8266<br>";
         info += "Core: " + String(ESP.getCoreVersion()) + "<br>";
     #endif
-    info += "Free RAM: " + String(ESP.getFreeHeap() / 1024) + " KB<br>";
     info += "Free RAM: " + String(ESP.getFreeHeap() / 1024) + " KB<br>";
     info += "Uptime: " + String(millis() / 1000) + " sec";
     return info;
@@ -188,6 +195,12 @@ void IskakINO_WifiPortal::tick() {
             _reconnectAttempts = 0;
         }
         _lastWifiCheck = millis();
+    }
+  // --- Portal Timeout Logic ---
+    if (_portalActive && _timeout > 0) {
+        if (millis() - _portalStartTime > (unsigned long)(_timeout * 1000)) {
+            ESP.restart();
+        }
     }
 }
 
@@ -280,22 +293,41 @@ void IskakINO_WifiPortal::handleOTA() {
 }
 
 void IskakINO_WifiPortal::handle() {
-    handleOTA(); // Urus update jika ada request
+    tick(); // Urus update jika ada request
 }
 
 
 // --- Storage Logic ---
 bool IskakINO_WifiPortal::loadConfig() {
-    #if defined(ESP32)
-        Preferences prefs;
-        prefs.begin("iskakino", true);
-        String s = prefs.getString("ssid", "");
-        prefs.end();
-        return (s != "");
-    #elif defined(ESP8266)
-        LittleFS.begin();
-        return LittleFS.exists("/iskak.txt");
-    #endif
+#if defined(ESP32)
+    Preferences prefs;
+    prefs.begin("wifi", true);
+    String s = prefs.getString("ssid", "");
+    String p = prefs.getString("pass", "");
+    prefs.end();
+
+    if (s != "") {
+        WiFi.begin(s.c_str(), p.c_str());
+        return true;
+    }
+    return false;
+#elif defined(ESP8266)
+    if (!LittleFS.begin()) return false;
+    if (!LittleFS.exists("/wifi.txt")) return false;
+
+    File f = LittleFS.open("/wifi.txt", "r");
+    if (!f) return false;
+
+    String s = f.readStringUntil('\n');
+    String p = f.readStringUntil('\n');
+    f.close();
+
+    s.trim();
+    p.trim();
+
+    WiFi.begin(s.c_str(), p.c_str());
+    return true;
+#endif
 }
 
 void IskakINO_WifiPortal::saveConfig(String ssid, String pass) {
