@@ -1,5 +1,5 @@
 # 🚀 IskakINO_WifiPortal
-![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/iskakfatoni/IskakINO_WifiPortal/compile.yml?branch=main&style=for-the-badge&logo=github&label=Build%20Status)
+[![Compile Examples](https://github.com/iskakfatoni/IskakINO_WifiPortal/actions/workflows/compile_test.yml/badge.svg)](https://github.com/iskakfatoni/IskakINO_WifiPortal/actions/workflows/compile_test.yml)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/iskakfatoni/IskakINO_WifiPortal?style=for-the-badge&logo=git&color=orange)
 ![Arduino Library](https://img.shields.io/badge/Arduino-Library-00979D?style=for-the-badge&logo=arduino&logoColor=white)
 ![Platform](https://img.shields.io/badge/Platform-ESP8266%20%7C%20ESP32-blue?style=for-the-badge&logo=espressif&logoColor=white)
